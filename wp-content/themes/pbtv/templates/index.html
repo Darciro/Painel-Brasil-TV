@@ -1,0 +1,54 @@
+<!-- wp:template-part {"slug":"header"} /-->
+
+<!-- wp:group {"tagName":"main","layout":{"type":"constrained"}} -->
+<main class="wp-block-group">
+	<div class="container py-10 mx-auto">
+		Ao vivo
+	</div>
+
+	<div class="bg-[#cce1e3]">
+		<div class="container py-10 mx-auto">
+			Destaques
+		</div>
+	</div>
+
+	<div class="container py-10 mx-auto">
+		<h2>Jornalismo comprometido com a democracia para entender o Brasil e o mundo</h2>
+		<p>O Painel Brasil TV é um canal de entrevistas, debates e análises apresentado pela jornalista Rosa Sarkis. Há
+			25 anos, produz conteúdo sobre política, sociedade, economia, cultura e geopolítica, reunindo especialistas
+			e lideranças para discutir os principais temas da atualidade. No YouTube e nas redes sociais, promove
+			jornalismo de qualidade, análise crítica, pluralidade de perspectivas e compromisso com a democracia.</p>
+	</div>
+
+	<div class="bg-[#cce1e3]">
+		<div class="container py-10 mx-auto">
+			Ultimas notícias
+		</div>
+	</div>
+
+	<div class="container py-10 mx-auto">
+		<h2>Rosa Sarkis</h2>
+		<p>Jornalista, editora e idealizadora do Painel Brasil TV, Rosa Sarkis está à frente do canal desde sua criação,
+			em 2001. Ao longo dessa trajetória, consolidou uma atuação marcada pela independência editorial e pela
+			credibilidade, acompanhando as transformações do jornalismo e ampliando a presença do canal no ambiente
+			digital. Sua atuação reafirma o compromisso com um jornalismo independente, crítico e plural.</p>
+	</div>
+
+	<!-- wp:query {"query":{"perPage":10,"pages":0,"offset":0,"postType":"post","order":"desc","orderBy":"date","inherit":true}} -->
+	<div class="wp-block-query">
+		<!-- wp:post-template -->
+		<!-- wp:post-title {"isLink":true} /-->
+		<!-- wp:post-excerpt /-->
+		<!-- /wp:post-template -->
+
+		<!-- wp:query-pagination -->
+		<!-- wp:query-pagination-previous /-->
+		<!-- wp:query-pagination-numbers /-->
+		<!-- wp:query-pagination-next /-->
+		<!-- /wp:query-pagination -->
+	</div>
+	<!-- /wp:query -->
+</main>
+<!-- /wp:group -->
+
+<!-- wp:template-part {"slug":"footer"} /-->

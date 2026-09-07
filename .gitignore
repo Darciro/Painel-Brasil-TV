@@ -1,0 +1,23 @@
+# WordPress core files
+/wp-admin/
+/wp-includes/
+/wp-*.php
+/xmlrpc.php
+/index.php
+/license.txt
+/readme.html
+
+# wp-content
+/wp-content/*
+!/wp-content/themes/
+!/wp-content/plugins/
+/wp-content/themes/*
+!/wp-content/themes/pbtv/
+
+# Build artifacts and dependencies
+node_modules/
+assets/dist/
+hot
+
+# OS files
+.DS_Store
