@@ -5,3 +5,5 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once get_theme_file_path( 'inc/assets.php' );
+require_once get_theme_file_path( 'inc/youtube.php' );
+require_once get_theme_file_path( 'inc/blocks.php' );

@@ -1,7 +1,18 @@
 @import "tailwindcss";
 
+@theme {
+	--color-pbtv-red: #C12E26;
+	--color-pbtv-green-light: #cce1e3;
+	--color-pbtv-green: #006871;
+}
+
 @source "../../templates/**/*.html";
 @source "../../parts/**/*.html";
 @source "../../patterns/**/*.php";
 @source "../../*.php";
 @source "../../inc/**/*.php";
+@source "../../blocks/**/*.php";
+
+.admin-bar .wp-site-blocks header.sticky.top-0{
+    top: 32px !important;
+}

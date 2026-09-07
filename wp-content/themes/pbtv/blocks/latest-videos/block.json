@@ -1,0 +1,31 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "pbtv/latest-videos",
+	"title": "Latest Videos",
+	"category": "media",
+	"icon": "video-alt3",
+	"description": "Displays the latest videos from a YouTube channel's live area.",
+	"textdomain": "pbtv",
+	"attributes": {
+		"channelId": {
+			"type": "string",
+			"default": ""
+		},
+		"maxResults": {
+			"type": "number",
+			"default": 3
+		},
+		"heading": {
+			"type": "string",
+			"default": "Ao vivo"
+		}
+	},
+	"supports": {
+		"html": false,
+		"align": false
+	},
+	"editorScript": "pbtv-latest-videos-editor",
+	"style": "pbtv-latest-videos",
+	"render": "file:./render.php"
+}

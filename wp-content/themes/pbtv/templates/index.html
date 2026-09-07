@@ -1,53 +1,67 @@
-<!-- wp:template-part {"slug":"header"} /-->
+<!-- wp:template-part {"slug":"header","className":"sticky top-0 z-50 bg-white"} /-->
 
 <!-- wp:group {"tagName":"main","layout":{"type":"constrained"}} -->
 <main class="wp-block-group">
-	<div class="container py-10 mx-auto">
-		Ao vivo
+	<!-- wp:group {"className":"container py-10 mx-auto"} -->
+	<div class="wp-block-group container py-10 mx-auto">
+		<!-- wp:pbtv/latest-videos {"channelId":"UC-NaUVi7uxYTceNy6RIWTRw","maxResults":3,"heading":"Ao vivo"} /-->
 	</div>
+	<!-- /wp:group -->
 
-	<div class="bg-[#cce1e3]">
+	<!-- wp:html -->
+	<div class="bg-pbtv-green-light">
 		<div class="container py-10 mx-auto">
-			Destaques
+			<h3 class="text-pbtv-green uppercase font-bold mb-4">Destaques</h3>
+			<div class="grid grid-cols-3 gap-4">
+				<div class="aspect-video bg-gray-100"></div>
+				<div class="aspect-video bg-gray-100"></div>
+				<div class="aspect-video bg-gray-100"></div>
+			</div>
 		</div>
 	</div>
+	<!-- /wp:html -->
 
-	<div class="container py-10 mx-auto">
-		<h2>Jornalismo comprometido com a democracia para entender o Brasil e o mundo</h2>
-		<p>O Painel Brasil TV é um canal de entrevistas, debates e análises apresentado pela jornalista Rosa Sarkis. Há
+	<!-- wp:html -->
+	<div class="container py-10 mx-auto flex justify-center items-center gap-4 px-50">
+		<h2 class="flex-1 text-pbtv-red font-bold mb-4 text-right text-3xl">Jornalismo comprometido com a
+			democracia
+			para entender
+			o Brasil e o mundo</h2>
+		<p class="flex-1">O Painel Brasil TV é um canal de entrevistas, debates e análises apresentado pela jornalista
+			Rosa Sarkis. Há
 			25 anos, produz conteúdo sobre política, sociedade, economia, cultura e geopolítica, reunindo especialistas
 			e lideranças para discutir os principais temas da atualidade. No YouTube e nas redes sociais, promove
 			jornalismo de qualidade, análise crítica, pluralidade de perspectivas e compromisso com a democracia.</p>
 	</div>
+	<!-- /wp:html -->
 
-	<div class="bg-[#cce1e3]">
+	<!-- wp:html -->
+	<div class="bg-pbtv-green-light">
 		<div class="container py-10 mx-auto">
-			Ultimas notícias
+			<h3 class="text-pbtv-green uppercase font-bold mb-4">Ultimas notícias</h3>
+			<div class="grid grid-cols-3 gap-4">
+				<div class="aspect-video bg-gray-100"></div>
+				<div class="aspect-video bg-gray-100"></div>
+				<div class="aspect-video bg-gray-100"></div>
+			</div>
 		</div>
 	</div>
+	<!-- /wp:html -->
 
-	<div class="container py-10 mx-auto">
-		<h2>Rosa Sarkis</h2>
-		<p>Jornalista, editora e idealizadora do Painel Brasil TV, Rosa Sarkis está à frente do canal desde sua criação,
-			em 2001. Ao longo dessa trajetória, consolidou uma atuação marcada pela independência editorial e pela
-			credibilidade, acompanhando as transformações do jornalismo e ampliando a presença do canal no ambiente
-			digital. Sua atuação reafirma o compromisso com um jornalismo independente, crítico e plural.</p>
+	<!-- wp:html -->
+	<div class="container py-10 mx-auto flex justify-center items-center gap-4 px-50">
+		<img src="https://static.wixstatic.com/media/b2e0e4_9b4b4dab83314bb3a28e3796551f121e~mv2.png/v1/fill/w_249,h_249,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/rosa%2Bfoto.png"
+			class="rounded-full w-64 h-64 object-cover" />
+		<div>
+			<h2 class="flex-1 text-pbtv-red font-bold mb-4 text-3xl">Rosa Sarkis</h2>
+			<p class="flex-1">Jornalista, editora e idealizadora do Painel Brasil TV, Rosa Sarkis está à frente do canal
+				desde sua criação,
+				em 2001. Ao longo dessa trajetória, consolidou uma atuação marcada pela independência editorial e pela
+				credibilidade, acompanhando as transformações do jornalismo e ampliando a presença do canal no ambiente
+				digital. Sua atuação reafirma o compromisso com um jornalismo independente, crítico e plural.</p>
+		</div>
 	</div>
-
-	<!-- wp:query {"query":{"perPage":10,"pages":0,"offset":0,"postType":"post","order":"desc","orderBy":"date","inherit":true}} -->
-	<div class="wp-block-query">
-		<!-- wp:post-template -->
-		<!-- wp:post-title {"isLink":true} /-->
-		<!-- wp:post-excerpt /-->
-		<!-- /wp:post-template -->
-
-		<!-- wp:query-pagination -->
-		<!-- wp:query-pagination-previous /-->
-		<!-- wp:query-pagination-numbers /-->
-		<!-- wp:query-pagination-next /-->
-		<!-- /wp:query-pagination -->
-	</div>
-	<!-- /wp:query -->
+	<!-- /wp:html -->
 </main>
 <!-- /wp:group -->
 

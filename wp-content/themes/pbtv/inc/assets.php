@@ -62,12 +62,40 @@ function pbtv_vite_manifest(): array {
 }
 
 /**
- * Enqueues the theme's front-end styles and scripts.
+ * Forces the Vite dev entries to be printed as `type="module"` script tags.
+ *
+ * `wp_enqueue_script_module()` is not an option here because its output is
+ * not collected by `_wp_get_iframed_editor_assets()`, so it would never
+ * reach the Post/Site Editor iframe. Registering these as regular scripts
+ * (via `wp_enqueue_script()`) keeps them in `$wp_scripts`, which the iframe
+ * asset collector does capture, while this filter restores the `module`
+ * type the browser needs to actually run them.
+ *
+ * @param string $tag    The `<script>` tag markup.
+ * @param string $handle The script's registered handle.
+ * @return string The filtered script tag markup.
+ */
+function pbtv_vite_dev_script_module_tag( string $tag, string $handle ): string {
+	if ( ! in_array( $handle, array( 'pbtv-vite-client', 'pbtv-main' ), true ) ) {
+		return $tag;
+	}
+
+	return str_replace( ' src=', ' type="module" src=', $tag );
+}
+
+add_filter( 'script_loader_tag', 'pbtv_vite_dev_script_module_tag', 10, 2 );
+
+/**
+ * Enqueues the theme's styles and scripts for the front-end and the editor.
+ *
+ * Hooked on `enqueue_block_assets` so the same assets are also pulled into
+ * the Post/Site Editor iframe, which is why Tailwind rules were missing
+ * there when this only ran on `wp_enqueue_scripts` (a front-end-only hook).
  *
  * In development, assets are served directly from the running Vite dev
- * server (with the Vite client script module for HMR). In production,
- * the built and hashed asset file is resolved from the Vite manifest and
- * enqueued as a regular stylesheet.
+ * server (with the Vite client script for HMR). In production, the built
+ * and hashed asset file is resolved from the Vite manifest and enqueued as
+ * a regular stylesheet.
  *
  * @return void
  */
@@ -75,8 +103,8 @@ function pbtv_theme_enqueue_assets(): void {
 	if ( pbtv_vite_is_dev_server_running() ) {
 		$dev_server = pbtv_vite_dev_server_url();
 
-		wp_enqueue_script_module( 'pbtv-vite-client', $dev_server . '/@vite/client' );
-		wp_enqueue_script_module( 'pbtv-main', $dev_server . '/src/css/main.css' );
+		wp_enqueue_script( 'pbtv-vite-client', $dev_server . '/@vite/client', array(), null );
+		wp_enqueue_script( 'pbtv-main', $dev_server . '/src/css/main.css', array( 'pbtv-vite-client' ), null );
 
 		return;
 	}
@@ -98,4 +126,4 @@ function pbtv_theme_enqueue_assets(): void {
 	);
 }
 
-add_action( 'wp_enqueue_scripts', 'pbtv_theme_enqueue_assets' );
+add_action( 'enqueue_block_assets', 'pbtv_theme_enqueue_assets' );
