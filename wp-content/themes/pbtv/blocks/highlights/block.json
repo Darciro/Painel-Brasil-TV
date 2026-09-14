@@ -1,0 +1,30 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "pbtv/highlights",
+	"title": "Highlights",
+	"category": "media",
+	"icon": "star-filled",
+	"description": "Displays a curated selection of YouTube videos marked as highlights.",
+	"textdomain": "pbtv",
+	"attributes": {
+		"heading": {
+			"type": "string",
+			"default": "Destaques"
+		},
+		"videos": {
+			"type": "array",
+			"default": [],
+			"items": {
+				"type": "string"
+			}
+		}
+	},
+	"supports": {
+		"html": false,
+		"align": false,
+		"anchor": true
+	},
+	"editorScript": "pbtv-highlights-editor",
+	"render": "file:./render.php"
+}

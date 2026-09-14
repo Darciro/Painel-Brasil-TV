@@ -3,19 +3,20 @@
 	var el = element.createElement;
 	var __ = i18n.__;
 
-	registerBlockType( 'pbtv/latest-videos', {
+	registerBlockType( 'pbtv/highlights', {
 		edit: function ( props ) {
 			var attributes = props.attributes;
+			var videos = attributes.videos || [];
 
-			return attributes.channelId
+			return videos.filter( Boolean ).length
 				? el( ServerSideRender, {
-						block: 'pbtv/latest-videos',
+						block: 'pbtv/highlights',
 						attributes: attributes,
 				  } )
 				: el(
 						'p',
 						null,
-						__( 'Set a YouTube channel ID in the block attributes to display the latest live videos.', 'pbtv' )
+						__( 'Add one or more YouTube videos to the block attributes to mark them as highlights.', 'pbtv' )
 				  );
 		},
 		save: function () {

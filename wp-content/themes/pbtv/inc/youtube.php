@@ -159,3 +159,110 @@ function pbtv_query_youtube_search( string $channel_id, string $api_key, string 
 
 	return $videos;
 }
+
+/**
+ * Builds a YouTube embed URL with the player parameters that strip
+ * back the extra UI YouTube overlays on top of the video itself:
+ * end-of-video suggestions from other channels, the "watch on YouTube"
+ * branding, and annotation cards.
+ *
+ * @param string $video_id YouTube video ID.
+ *
+ * @return string The embed URL.
+ */
+function pbtv_get_youtube_embed_url( string $video_id ): string {
+	return add_query_arg(
+		array(
+			'rel'            => 0,
+			'modestbranding' => 1,
+			'iv_load_policy' => 3,
+		),
+		'https://www.youtube.com/embed/' . $video_id
+	);
+}
+
+/**
+ * Extracts an 11-character YouTube video ID from a watch/embed/short
+ * URL, a youtu.be link, or a bare ID.
+ *
+ * @param string $input Raw video URL or ID.
+ *
+ * @return string The video ID, or an empty string when none was found.
+ */
+function pbtv_extract_youtube_video_id( string $input ): string {
+	$input = trim( $input );
+
+	if ( preg_match( '/^[A-Za-z0-9_-]{11}$/', $input ) ) {
+		return $input;
+	}
+
+	if ( preg_match( '#(?:youtube\.com/(?:watch\?v=|embed/|live/|shorts/)|youtu\.be/)([A-Za-z0-9_-]{11})#', $input, $matches ) ) {
+		return $matches[1];
+	}
+
+	return '';
+}
+
+/**
+ * Retrieves a YouTube video's title and thumbnail via the public oEmbed
+ * endpoint, which requires no API key. Results are cached in a transient
+ * since a video's metadata rarely changes.
+ *
+ * @param string $video_id YouTube video ID.
+ *
+ * @return array<string, string> Array with title and thumbnail keys,
+ *                                empty when the video could not be
+ *                                resolved.
+ */
+function pbtv_get_youtube_video_oembed( string $video_id ): array {
+	if ( ! $video_id ) {
+		return array();
+	}
+
+	$cache_key = 'pbtv_yt_oembed_' . $video_id;
+	$cached    = get_transient( $cache_key );
+
+	if ( false !== $cached ) {
+		return $cached;
+	}
+
+	$data = pbtv_fetch_youtube_video_oembed( $video_id );
+
+	set_transient( $cache_key, $data, DAY_IN_SECONDS );
+
+	return $data;
+}
+
+/**
+ * Queries the YouTube oEmbed endpoint for a single video's metadata.
+ *
+ * @param string $video_id YouTube video ID.
+ *
+ * @return array<string, string>
+ */
+function pbtv_fetch_youtube_video_oembed( string $video_id ): array {
+	$url = add_query_arg(
+		array(
+			'url'    => 'https://www.youtube.com/watch?v=' . $video_id,
+			'format' => 'json',
+		),
+		'https://www.youtube.com/oembed'
+	);
+
+	$response = wp_remote_get( $url, array( 'timeout' => 5 ) );
+
+	if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+		return array();
+	}
+
+	$body = json_decode( wp_remote_retrieve_body( $response ), true );
+
+	if ( ! is_array( $body ) ) {
+		return array();
+	}
+
+	return array(
+		'title'     => sanitize_text_field( $body['title'] ?? '' ),
+		'thumbnail' => esc_url_raw( $body['thumbnail_url'] ?? '' ),
+	);
+}

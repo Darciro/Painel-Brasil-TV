@@ -44,7 +44,7 @@ $secondary = $videos;
 			<div class="aspect-video">
 				<iframe
 					class="w-full h-full"
-					src="<?php echo esc_url( 'https://www.youtube.com/embed/' . $primary['id'] ); ?>"
+					src="<?php echo esc_url( pbtv_get_youtube_embed_url( $primary['id'] ) ); ?>"
 					title="<?php echo esc_attr( $primary['title'] ); ?>"
 					loading="lazy"
 					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -61,7 +61,7 @@ $secondary = $videos;
 						<div class="aspect-video">
 							<iframe
 								class="w-full h-full"
-								src="<?php echo esc_url( 'https://www.youtube.com/embed/' . $video['id'] ); ?>"
+								src="<?php echo esc_url( pbtv_get_youtube_embed_url( $video['id'] ) ); ?>"
 								title="<?php echo esc_attr( $video['title'] ); ?>"
 								loading="lazy"
 								allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
