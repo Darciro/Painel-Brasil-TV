@@ -1,0 +1,24 @@
+.git
+.claude
+.env
+pbtv.zip
+
+# WordPress core (comes from the wordpress base image, not the repo)
+/wp-admin
+/wp-includes
+/wp-*.php
+/xmlrpc.php
+/index.php
+/license.txt
+/readme.html
+
+# wp-content, except what the Dockerfile actually copies
+wp-content/uploads
+wp-content/debug.log
+wp-content/languages
+wp-content/themes/twentytwentytwo
+wp-content/themes/twentytwentythree
+wp-content/themes/twentytwentyfour
+wp-content/themes/twentytwentyfive
+wp-content/themes/pbtv/node_modules
+wp-content/themes/pbtv/assets/dist
