@@ -52,6 +52,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Verify deploy secrets are set
+        run: |
+          missing=()
+          [ -z "${{ secrets.DO_HOST }}" ] && missing+=("DO_HOST")
+          [ -z "${{ secrets.DO_SSH_USER }}" ] && missing+=("DO_SSH_USER")
+          [ -z "${{ secrets.DO_SSH_KEY }}" ] && missing+=("DO_SSH_KEY")
+          [ -z "${{ secrets.DO_SSH_PORT }}" ] && missing+=("DO_SSH_PORT")
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Missing required repository secrets: ${missing[*]}. Set them under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
       - name: Copy compose file to droplet
         uses: appleboy/scp-action@v0.1.7
         with:
