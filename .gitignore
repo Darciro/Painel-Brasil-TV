@@ -18,6 +18,10 @@
 node_modules/
 assets/dist/
 hot
+pbtv.zip
 
 # OS files
 .DS_Store
+
+# Docker
+.env
