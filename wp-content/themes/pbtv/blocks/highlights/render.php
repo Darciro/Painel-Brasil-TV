@@ -29,17 +29,6 @@ foreach ( $videos as $video ) {
 	);
 }
 
-if ( ! $highlights ) {
-	if ( is_admin() ) {
-		printf(
-			'<p %s>%s</p>',
-			wp_kses_post( get_block_wrapper_attributes() ),
-			esc_html__( 'Add one or more YouTube videos in the block settings to mark them as highlights.', 'pbtv' )
-		);
-	}
-
-	return;
-}
 ?>
 <div <?php echo wp_kses_post( get_block_wrapper_attributes() ); ?>>
 	<?php if ( $heading ) : ?>
@@ -47,22 +36,30 @@ if ( ! $highlights ) {
 	<?php endif; ?>
 
 	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-		<?php foreach ( $highlights as $highlight ) : ?>
-			<div class="highlight-video">
-				<div class="aspect-video">
-					<iframe
-						class="w-full h-full"
-						src="<?php echo esc_url( pbtv_get_youtube_embed_url( $highlight['id'] ) ); ?>"
-						title="<?php echo esc_attr( $highlight['title'] ? $highlight['title'] : __( 'YouTube video', 'pbtv' ) ); ?>"
-						loading="lazy"
-						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-						allowfullscreen
-					></iframe>
+		<?php if ( $highlights ) : ?>
+			<?php foreach ( $highlights as $highlight ) : ?>
+				<div class="highlight-video">
+					<div class="aspect-video">
+						<iframe
+							class="w-full h-full"
+							src="<?php echo esc_url( pbtv_get_youtube_embed_url( $highlight['id'] ) ); ?>"
+							title="<?php echo esc_attr( $highlight['title'] ? $highlight['title'] : __( 'YouTube video', 'pbtv' ) ); ?>"
+							loading="lazy"
+							allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+							allowfullscreen
+						></iframe>
+					</div>
+					<?php if ( $highlight['title'] ) : ?>
+						<p class="mt-2 text-sm font-semibold text-gray-900"><?php echo esc_html( $highlight['title'] ); ?></p>
+					<?php endif; ?>
 				</div>
-				<?php if ( $highlight['title'] ) : ?>
-					<p class="mt-2 text-sm font-semibold text-gray-900"><?php echo esc_html( $highlight['title'] ); ?></p>
-				<?php endif; ?>
-			</div>
-		<?php endforeach; ?>
+			<?php endforeach; ?>
+		<?php else : ?>
+			<?php for ( $placeholder = 0; $placeholder < 3; $placeholder++ ) : ?>
+				<div class="highlight-video highlight-video--placeholder" aria-hidden="true">
+					<div class="aspect-video bg-gray-200 animate-pulse rounded"></div>
+				</div>
+			<?php endfor; ?>
+		<?php endif; ?>
 	</div>
 </div>

@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@utility container {
+	max-width: 1200px;
+}
+
 @theme {
 	--color-pbtv-red: #C12E26;
 	--color-pbtv-green-light: #cce1e3;
