@@ -12,13 +12,19 @@ services:
     networks:
       - pbtv
 
+  fix-uploads-perms:
+    image: busybox
+    command: ["chown", "-R", "33:33", "/var/www/html/wp-content/uploads"]
+    volumes:
+      - wp_uploads:/var/www/html/wp-content/uploads
+
   wordpress:
-    # Built and pushed by .github/workflows/deploy.yml — never built on the
-    # server. Overridden per-deploy to an immutable ghcr.io/...:<sha> tag;
-    # falls back to :latest for manual `docker compose up` on the server.
     image: ${WORDPRESS_IMAGE:-ghcr.io/darciro/painel-brasil-tv:latest}
     depends_on:
-      - db
+      db:
+        condition: service_started
+      fix-uploads-perms:
+        condition: service_completed_successfully
     restart: unless-stopped
     environment:
       WORDPRESS_DB_HOST: db:3306
