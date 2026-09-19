@@ -1,6 +1,7 @@
 ( function ( blocks, blockEditor, components, element, i18n, ServerSideRender ) {
 	var registerBlockType = blocks.registerBlockType;
 	var InspectorControls = blockEditor.InspectorControls;
+	var useBlockProps = blockEditor.useBlockProps;
 	var PanelBody = components.PanelBody;
 	var TextControl = components.TextControl;
 	var RangeControl = components.RangeControl;
@@ -12,6 +13,7 @@
 		edit: function ( props ) {
 			var attributes = props.attributes;
 			var setAttributes = props.setAttributes;
+			var blockProps = useBlockProps();
 
 			return el(
 				Fragment,
@@ -40,10 +42,14 @@
 						} )
 					)
 				),
-				el( ServerSideRender, {
-					block: 'pbtv/news',
-					attributes: attributes,
-				} )
+				el(
+					'div',
+					blockProps,
+					el( ServerSideRender, {
+						block: 'pbtv/news',
+						attributes: attributes,
+					} )
+				)
 			);
 		},
 		save: function () {
