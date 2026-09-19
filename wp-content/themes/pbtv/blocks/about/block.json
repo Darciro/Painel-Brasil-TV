@@ -1,0 +1,35 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "pbtv/about",
+	"title": "Sobre",
+	"category": "media",
+	"icon": "admin-users",
+	"description": "Displays an about section with a portrait image, a heading, and descriptive text.",
+	"textdomain": "pbtv",
+	"attributes": {
+		"imageUrl": {
+			"type": "string",
+			"default": ""
+		},
+		"imageAlt": {
+			"type": "string",
+			"default": ""
+		},
+		"heading": {
+			"type": "string",
+			"default": ""
+		},
+		"description": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"html": false,
+		"align": false,
+		"anchor": true
+	},
+	"editorScript": "pbtv-about-editor",
+	"render": "file:./render.php"
+}

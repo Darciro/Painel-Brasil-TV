@@ -4,12 +4,12 @@
 	var useBlockProps = blockEditor.useBlockProps;
 	var PanelBody = components.PanelBody;
 	var TextControl = components.TextControl;
-	var RangeControl = components.RangeControl;
+	var TextareaControl = components.TextareaControl;
 	var el = element.createElement;
 	var Fragment = element.Fragment;
 	var __ = i18n.__;
 
-	registerBlockType( 'pbtv/latest-videos', {
+	registerBlockType( 'pbtv/about', {
 		edit: function ( props ) {
 			var attributes = props.attributes;
 			var setAttributes = props.setAttributes;
@@ -23,7 +23,21 @@
 					null,
 					el(
 						PanelBody,
-						{ title: __( 'Latest Videos Settings', 'pbtv' ) },
+						{ title: __( 'About Settings', 'pbtv' ) },
+						el( TextControl, {
+							label: __( 'Image URL', 'pbtv' ),
+							value: attributes.imageUrl,
+							onChange: function ( value ) {
+								setAttributes( { imageUrl: value } );
+							},
+						} ),
+						el( TextControl, {
+							label: __( 'Image alt text', 'pbtv' ),
+							value: attributes.imageAlt,
+							onChange: function ( value ) {
+								setAttributes( { imageAlt: value } );
+							},
+						} ),
 						el( TextControl, {
 							label: __( 'Heading', 'pbtv' ),
 							value: attributes.heading,
@@ -31,20 +45,11 @@
 								setAttributes( { heading: value } );
 							},
 						} ),
-						el( TextControl, {
-							label: __( 'YouTube channel ID', 'pbtv' ),
-							value: attributes.channelId,
+						el( TextareaControl, {
+							label: __( 'Description', 'pbtv' ),
+							value: attributes.description,
 							onChange: function ( value ) {
-								setAttributes( { channelId: value } );
-							},
-						} ),
-						el( RangeControl, {
-							label: __( 'Number of videos', 'pbtv' ),
-							value: attributes.maxResults,
-							min: 1,
-							max: 12,
-							onChange: function ( value ) {
-								setAttributes( { maxResults: value } );
+								setAttributes( { description: value } );
 							},
 						} )
 					)
@@ -52,16 +57,10 @@
 				el(
 					'div',
 					blockProps,
-					attributes.channelId
-						? el( ServerSideRender, {
-								block: 'pbtv/latest-videos',
-								attributes: attributes,
-						  } )
-						: el(
-								'p',
-								null,
-								__( 'Set a YouTube channel ID in the block settings to display the latest live videos.', 'pbtv' )
-						  )
+					el( ServerSideRender, {
+						block: 'pbtv/about',
+						attributes: attributes,
+					} )
 				)
 			);
 		},

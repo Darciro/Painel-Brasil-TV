@@ -14,10 +14,18 @@
 		},
 		"videos": {
 			"type": "array",
-			"default": [],
+			"default": [
+				"https://www.youtube.com/watch?v=VSs6YXxqGEA",
+				"https://www.youtube.com/watch?v=bRBAy9QR0-g",
+				"https://www.youtube.com/watch?v=3goJgUysJtU"
+			],
 			"items": {
 				"type": "string"
 			}
+		},
+		"showTitle": {
+			"type": "boolean",
+			"default": true
 		}
 	},
 	"supports": {

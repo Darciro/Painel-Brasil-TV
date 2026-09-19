@@ -1,53 +1,58 @@
-<!-- wp:template-part {"slug":"header","className":"sticky top-0 z-100 bg-white"} /-->
+<!-- wp:template-part {"slug":"header","className":"sticky top-0 z-[1000] bg-white"} /-->
 
-<!-- wp:group {"tagName":"main","layout":{"type":"constrained"}} -->
+<!-- wp:group {"tagName":"main","layout":{"type":"default"}} -->
 <main class="wp-block-group">
-	<!-- wp:group {"className":"container py-10 mx-auto"} -->
-	<div class="wp-block-group container py-10 mx-auto">
-		<!-- wp:pbtv/latest-videos {"channelId":"UC-NaUVi7uxYTceNy6RIWTRw","maxResults":3,"heading":"Ao vivo"} /-->
-	</div>
-	<!-- /wp:group -->
 
-	<!-- wp:group {"className":"bg-pbtv-green-light"} -->
-	<div class="wp-block-group bg-pbtv-green-light">
-		<!-- wp:pbtv/highlights {"anchor":"highlights","heading":"Destaques","className":"container py-10 mx-auto"} /-->
-	</div>
-	<!-- /wp:group -->
+	<!-- wp:pbtv/latest-videos {"channelId":"UC-NaUVi7uxYTceNy6RIWTRw","maxResults":3,"heading":"Ao vivo","className":"container py-10 mx-auto px-4 xl:px-0"} /-->
 
-	<!-- wp:html -->
-	<div class="container py-10 mx-auto flex justify-center items-center gap-4 px-50">
-		<h2 class="flex-1 text-pbtv-red font-bold mb-4 text-right text-3xl">Jornalismo comprometido com a
-			democracia
-			para entender
-			o Brasil e o mundo</h2>
-		<p class="flex-1">O Painel Brasil TV é um canal de entrevistas, debates e análises apresentado pela jornalista
-			Rosa Sarkis. Há
-			25 anos, produz conteúdo sobre política, sociedade, economia, cultura e geopolítica, reunindo especialistas
-			e lideranças para discutir os principais temas da atualidade. No YouTube e nas redes sociais, promove
-			jornalismo de qualidade, análise crítica, pluralidade de perspectivas e compromisso com a democracia.</p>
-	</div>
-	<!-- /wp:html -->
+	<!-- wp:pbtv/highlights {"anchor":"highlights","heading":"Destaques","className":"bg-pbtv-green-light"} /-->
 
-	<!-- wp:group {"className":"bg-pbtv-green-light"} -->
-	<div class="wp-block-group bg-pbtv-green-light">
-		<!-- wp:pbtv/news {"anchor":"news","heading":"Últimas notícias","maxItems":8,"className":"container py-10 mx-auto"} /-->
-	</div>
-	<!-- /wp:group -->
+	<!-- wp:columns {"verticalAlignment":"center","className":"container py-10 mx-auto max-w-9/10 md:max-w-3/4 px-4 xl:px-0"} -->
+	<div
+		class="wp-block-columns are-vertically-aligned-center container py-10 mx-auto max-w-9/10 md:max-w-3/4 px-4 xl:px-0">
 
-	<!-- wp:html -->
-	<div class="container py-10 mx-auto flex justify-center items-center gap-4 px-50">
-		<img src="https://static.wixstatic.com/media/b2e0e4_9b4b4dab83314bb3a28e3796551f121e~mv2.png/v1/fill/w_249,h_249,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/rosa%2Bfoto.png"
-			class="rounded-full w-64 h-64 object-cover" />
-		<div>
-			<h2 class="flex-1 text-pbtv-red font-bold mb-4 text-3xl">Rosa Sarkis</h2>
-			<p class="flex-1">Jornalista, editora e idealizadora do Painel Brasil TV, Rosa Sarkis está à frente do canal
-				desde sua criação,
-				em 2001. Ao longo dessa trajetória, consolidou uma atuação marcada pela independência editorial e pela
-				credibilidade, acompanhando as transformações do jornalismo e ampliando a presença do canal no ambiente
-				digital. Sua atuação reafirma o compromisso com um jornalismo independente, crítico e plural.</p>
+		<!-- wp:column {"verticalAlignment":"center"} -->
+		<div class="wp-block-column is-vertically-aligned-center">
+
+			<!-- wp:heading {"level":2,"className":"text-pbtv-red font-bold text-3xl md:text-4xl text-left md:text-right"} -->
+			<h2 class="wp-block-heading text-pbtv-red font-bold text-3xl md:text-4xl text-left md:text-right">
+				Jornalismo comprometido com a democracia para entender o Brasil e o mundo
+			</h2>
+			<!-- /wp:heading -->
+
 		</div>
+		<!-- /wp:column -->
+
+		<!-- wp:column {"verticalAlignment":"center"} -->
+		<div class="wp-block-column is-vertically-aligned-center">
+
+			<!-- wp:paragraph -->
+			<p>
+				O Painel Brasil TV é um canal de entrevistas, debates e análises apresentado pela jornalista Rosa
+				Sarkis.
+				Há 25 anos, produz conteúdo sobre política, sociedade, economia, cultura e geopolítica, reunindo
+				especialistas e lideranças para discutir os principais temas da atualidade. No YouTube e nas redes
+				sociais, promove jornalismo de qualidade, análise crítica, pluralidade de perspectivas e compromisso com
+				a democracia.
+			</p>
+			<!-- /wp:paragraph -->
+
+		</div>
+		<!-- /wp:column -->
+
 	</div>
-	<!-- /wp:html -->
+	<!-- /wp:columns -->
+
+	<!-- wp:group {"className":"bg-pbtv-green-light"} -->
+	<div class="wp-block-group bg-pbtv-green-light">
+
+		<!-- wp:pbtv/news {"anchor":"news","heading":"Últimas notícias","maxItems":8,"className":"bg-pbtv-green-light"} /-->
+
+	</div>
+	<!-- /wp:group -->
+
+	<!-- wp:pbtv/about {"imageUrl":"/wp-content/themes/pbtv/assets/images/rosa-foto.png","imageAlt":"Rosa Sarkis","heading":"Rosa Sarkis","description":"Jornalista, editora e idealizadora do Painel Brasil TV, Rosa Sarkis está à frente do canal desde sua criação, em 2001. Ao longo dessa trajetória, consolidou uma atuação marcada pela independência editorial e pela credibilidade, acompanhando as transformações do jornalismo e ampliando a presença do canal no ambiente digital. Sua atuação reafirma o compromisso com um jornalismo independente, crítico e plural.","className":"container py-10 mx-auto max-w-9/10 md:max-w-3/4"} /-->
+
 </main>
 <!-- /wp:group -->
 
