@@ -182,6 +182,17 @@ function pbtv_get_youtube_embed_url( string $video_id ): string {
 }
 
 /**
+ * Builds a canonical YouTube watch URL for a video ID.
+ *
+ * @param string $video_id YouTube video ID.
+ *
+ * @return string The watch URL.
+ */
+function pbtv_get_youtube_watch_url( string $video_id ): string {
+	return add_query_arg( 'v', $video_id, 'https://www.youtube.com/watch' );
+}
+
+/**
  * Extracts an 11-character YouTube video ID from a watch/embed/short
  * URL, a youtu.be link, or a bare ID.
  *

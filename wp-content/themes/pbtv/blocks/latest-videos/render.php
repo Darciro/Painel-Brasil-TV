@@ -31,8 +31,10 @@ if ( ! $videos ) {
 	return;
 }
 
-$primary   = array_shift( $videos );
-$secondary = $videos;
+$primary     = array_shift( $videos );
+$secondary   = $videos;
+$videos_page = get_page_by_path( 'videos' );
+$videos_url  = $videos_page ? get_permalink( $videos_page ) : home_url( '/videos' );
 ?>
 <div <?php echo wp_kses_post( get_block_wrapper_attributes() ); ?>>
 	<?php if ( $heading ) : ?>
@@ -76,7 +78,7 @@ $secondary = $videos;
 	</div>
 
 	<div class="mt-8">
-		<a href="#" class="font-bold text-white uppercase bg-pbtv-green ps-4 pe-16 py-2 rounded relative inline-block">Mais vídeos 
+		<a href="<?php echo esc_url( $videos_url ); ?>" class="font-bold text-white uppercase bg-pbtv-green ps-4 pe-16 py-2 rounded relative inline-block">Mais vídeos 
 			<svg class="inline-block absolute right-4 top-1/2 transform -translate-y-1/2 max-w-9 fill-white" data-bbox="9 70.9 181 59" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
     			<g>
         			<path d="M159 70.9l-2.2 2.4L183.6 99H9v3h174.6l-26.2 25.3 2.1 2.6 30.5-29.3-31-29.7z"></path>

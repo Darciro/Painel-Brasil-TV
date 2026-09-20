@@ -27,10 +27,10 @@ if ( ! $image_url && ! $heading && ! $description ) {
 }
 ?>
 <div <?php echo wp_kses_post( get_block_wrapper_attributes() ); ?>>
-	<div class="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6 items-center">
+	<div class="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6 items-center mx-auto">
 		<?php if ( $image_url ) : ?>
 			<img
-				class="rounded-full w-64 h-64 object-cover"
+				class="rounded-full w-64 h-64 object-cover mx-auto"
 				src="<?php echo esc_url( $image_url ); ?>"
 				alt="<?php echo esc_attr( $image_alt ); ?>"
 				loading="lazy"
@@ -39,7 +39,7 @@ if ( ! $image_url && ! $heading && ! $description ) {
 
 		<div>
 			<?php if ( $heading ) : ?>
-				<h2 class="wp-block-heading text-pbtv-red font-bold text-4xl mb-4"><?php echo esc_html( $heading ); ?></h2>
+				<h2 class="wp-block-heading text-pbtv-red font-bold text-4xl mb-4 text-center md:text-left"><?php echo esc_html( $heading ); ?></h2>
 			<?php endif; ?>
 
 			<?php if ( $description ) : ?>
