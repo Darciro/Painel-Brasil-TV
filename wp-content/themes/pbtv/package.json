@@ -5,11 +5,15 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
-		"build": "vite build"
+		"build": "vite build",
+		"zip": "node scripts/zip.js"
 	},
 	"devDependencies": {
 		"@tailwindcss/vite": "^4.3.3",
 		"tailwindcss": "^4.3.3",
 		"vite": "^8.2.2"
+	},
+	"dependencies": {
+		"archiver": "^8.0.0"
 	}
 }

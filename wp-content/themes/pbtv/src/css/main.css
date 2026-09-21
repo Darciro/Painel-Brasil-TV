@@ -20,3 +20,15 @@
 .admin-bar .wp-site-blocks header.sticky.top-0{
     top: 32px !important;
 }
+
+.wp-block-post-title {
+	margin-bottom: 2rem;
+}
+
+@media (max-width: 40rem) {
+	header .wp-block-site-logo img{
+		height: 100%;
+		width: auto;
+		max-height: 75px;
+	}
+}
