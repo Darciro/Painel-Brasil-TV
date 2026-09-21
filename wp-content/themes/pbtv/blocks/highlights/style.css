@@ -1,8 +1,8 @@
-.wp-block-pbtv-latest-videos iframe {
+.wp-block-pbtv-highlights iframe {
 	border: 0;
 }
 
-.wp-block-pbtv-latest-videos .video-thumbnail__play {
+.wp-block-pbtv-highlights .video-thumbnail__play {
 	position: absolute;
 	top: 50%;
 	left: 50%;
@@ -13,7 +13,7 @@
 	background: rgba(0, 0, 0, 0.6);
 }
 
-.wp-block-pbtv-latest-videos .video-thumbnail__play::before {
+.wp-block-pbtv-highlights .video-thumbnail__play::before {
 	content: "";
 	position: absolute;
 	top: 50%;

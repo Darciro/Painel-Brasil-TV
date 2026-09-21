@@ -234,25 +234,28 @@ function pbtv_news_extract_image( SimplePie_Item $item ): string {
 
 /**
  * Retrieves the latest classified news items across all configured
- * feeds. Results are cached in a transient so the feeds are not fetched
- * on every pageview.
+ * feeds, optionally filtered to a single topic. Results are cached in a
+ * transient so the feeds are not fetched on every pageview.
  *
- * @param int $max_items Maximum number of items to return.
+ * @param int    $max_items Maximum number of items to return.
+ * @param string $topic     Topic to filter by, as returned by
+ *                           pbtv_news_topics(). An empty string returns
+ *                           items across every topic.
  *
  * @return array<int, array<string, mixed>> List of items, each with
  *                                           title, link, timestamp,
  *                                           image, source, color and
  *                                           topic keys.
  */
-function pbtv_get_news_items( int $max_items = 8 ): array {
-	$cache_key = 'pbtv_news_' . md5( (string) $max_items );
+function pbtv_get_news_items( int $max_items = 8, string $topic = '' ): array {
+	$cache_key = 'pbtv_news_' . md5( $max_items . '|' . $topic );
 	$cached    = get_transient( $cache_key );
 
 	if ( false !== $cached ) {
 		return $cached;
 	}
 
-	$items = pbtv_fetch_news_items( $max_items );
+	$items = pbtv_fetch_news_items( $max_items, $topic );
 
 	set_transient( $cache_key, $items, 10 * MINUTE_IN_SECONDS );
 
@@ -260,15 +263,18 @@ function pbtv_get_news_items( int $max_items = 8 ): array {
 }
 
 /**
- * Fetches, classifies, sorts and trims news items from every configured
- * feed. Feeds that fail to load are silently skipped so the block keeps
- * working with whichever feeds are available.
+ * Fetches, classifies, filters, sorts and trims news items from every
+ * configured feed. Feeds that fail to load are silently skipped so the
+ * block keeps working with whichever feeds are available.
  *
- * @param int $max_items Maximum number of items to return.
+ * @param int    $max_items Maximum number of items to return.
+ * @param string $topic     Topic to filter by, as returned by
+ *                           pbtv_news_topics(). An empty string returns
+ *                           items across every topic.
  *
  * @return array<int, array<string, mixed>>
  */
-function pbtv_fetch_news_items( int $max_items ): array {
+function pbtv_fetch_news_items( int $max_items, string $topic = '' ): array {
 	$items = array();
 
 	foreach ( pbtv_news_feeds() as $feed_config ) {
@@ -282,7 +288,91 @@ function pbtv_fetch_news_items( int $max_items ): array {
 		}
 	);
 
-	return array_slice( $items, 0, $max_items );
+	if ( '' !== $topic ) {
+		$items = array_values(
+			array_filter(
+				$items,
+				static function ( array $item ) use ( $topic ): bool {
+					return $item['topic'] === $topic;
+				}
+			)
+		);
+
+		return array_slice( $items, 0, $max_items );
+	}
+
+	return pbtv_diversify_news_items_by_topic( $items, $max_items );
+}
+
+/**
+ * Picks a topic-balanced set of highlights out of the already
+ * recency-sorted items: one item per topic per round, round-robin,
+ * instead of a flat chronological slice.
+ *
+ * A flat slice would let a single topic having a busy news cycle crowd
+ * out every other topic, so the "Destaques" (no filter) view would end
+ * up looking like a single-topic feed instead of a general highlight
+ * reel. Each topic still contributes its most recent items first, and
+ * topics with fewer items simply run out and stop contributing.
+ *
+ * @param array<int, array<string, mixed>> $items     Items already sorted by recency.
+ * @param int                              $max_items Maximum number of items to return.
+ *
+ * @return array<int, array<string, mixed>>
+ */
+function pbtv_diversify_news_items_by_topic( array $items, int $max_items ): array {
+	$items_by_topic = array();
+
+	foreach ( $items as $item ) {
+		$items_by_topic[ $item['topic'] ][] = $item;
+	}
+
+	$highlights = array();
+
+	while ( count( $highlights ) < $max_items && ! empty( $items_by_topic ) ) {
+		foreach ( $items_by_topic as $topic => $topic_items ) {
+			if ( count( $highlights ) >= $max_items ) {
+				break;
+			}
+
+			$highlights[] = array_shift( $items_by_topic[ $topic ] );
+
+			if ( empty( $items_by_topic[ $topic ] ) ) {
+				unset( $items_by_topic[ $topic ] );
+			}
+		}
+	}
+
+	usort(
+		$highlights,
+		static function ( array $a, array $b ): int {
+			return $b['timestamp'] <=> $a['timestamp'];
+		}
+	);
+
+	return $highlights;
+}
+
+/**
+ * Formats a raw news item for display, adding the derived fields the
+ * templates need: a localized date string and the fallback initial
+ * letter shown when an item has no image.
+ *
+ * @param array<string, mixed> $item Raw item, see pbtv_fetch_news_feed_items().
+ *
+ * @return array<string, string> Item ready for display.
+ */
+function pbtv_news_prepare_item_for_display( array $item ): array {
+	return array(
+		'title'   => (string) $item['title'],
+		'link'    => (string) $item['link'],
+		'image'   => (string) $item['image'],
+		'source'  => (string) $item['source'],
+		'color'   => (string) $item['color'],
+		'topic'   => (string) $item['topic'],
+		'date'    => wp_date( 'd M, H:i', (int) $item['timestamp'] ),
+		'initial' => mb_substr( (string) $item['source'], 0, 1 ),
+	);
 }
 
 /**
@@ -341,4 +431,74 @@ function pbtv_fetch_news_feed_items( array $feed_config ): array {
 	}
 
 	return $items;
+}
+
+/**
+ * Registers the REST route the pbtv/news block's view script uses to
+ * re-fetch news items when a topic filter is applied, without a full
+ * page reload.
+ *
+ * @return void
+ */
+function pbtv_register_news_rest_route(): void {
+	register_rest_route(
+		'pbtv/v1',
+		'/news',
+		array(
+			'methods'             => WP_REST_Server::READABLE,
+			'callback'            => 'pbtv_rest_get_news_items',
+			'permission_callback' => '__return_true',
+			'args'                => array(
+				'topic'    => array(
+					'type'              => 'string',
+					'default'           => '',
+					'sanitize_callback' => 'sanitize_text_field',
+					'validate_callback' => 'pbtv_rest_validate_news_topic',
+				),
+				'maxItems' => array(
+					'type'              => 'integer',
+					'default'           => 8,
+					'sanitize_callback' => 'absint',
+				),
+			),
+		)
+	);
+}
+
+add_action( 'rest_api_init', 'pbtv_register_news_rest_route' );
+
+/**
+ * Validates a `topic` REST parameter against the configured topic list.
+ *
+ * @param string $value Parameter value.
+ *
+ * @return bool True when the value is a known topic or empty.
+ */
+function pbtv_rest_validate_news_topic( string $value ): bool {
+	if ( '' === $value ) {
+		return true;
+	}
+
+	return in_array( $value, array_keys( pbtv_news_topics() ), true );
+}
+
+/**
+ * REST callback returning news items, optionally filtered by topic, for
+ * the pbtv/news block's client-side topic filter.
+ *
+ * @param WP_REST_Request $request REST request.
+ *
+ * @return WP_REST_Response
+ */
+function pbtv_rest_get_news_items( WP_REST_Request $request ): WP_REST_Response {
+	$topic     = (string) $request->get_param( 'topic' );
+	$max_items = max( 1, min( 24, absint( $request->get_param( 'maxItems' ) ) ) );
+
+	$items = pbtv_get_news_items( $max_items, $topic );
+
+	return new WP_REST_Response(
+		array(
+			'items' => array_map( 'pbtv_news_prepare_item_for_display', $items ),
+		)
+	);
 }

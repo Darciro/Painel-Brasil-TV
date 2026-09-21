@@ -20,8 +20,10 @@
 	"supports": {
 		"html": false,
 		"align": false,
-		"anchor": true
+		"anchor": true,
+		"interactivity": true
 	},
 	"editorScript": "pbtv-news-editor",
+	"viewScriptModule": "file:./view.js",
 	"render": "file:./render.php"
 }

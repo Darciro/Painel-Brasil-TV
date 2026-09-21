@@ -5,6 +5,7 @@
 	var PanelBody = components.PanelBody;
 	var TextControl = components.TextControl;
 	var RangeControl = components.RangeControl;
+	var SelectControl = components.SelectControl;
 	var el = element.createElement;
 	var Fragment = element.Fragment;
 	var __ = i18n.__;
@@ -45,6 +46,17 @@
 							max: 12,
 							onChange: function ( value ) {
 								setAttributes( { maxResults: value } );
+							},
+						} ),
+						el( SelectControl, {
+							label: __( 'Formato', 'pbtv' ),
+							value: attributes.format,
+							options: [
+								{ label: __( 'Embed', 'pbtv' ), value: 'embed' },
+								{ label: __( 'Miniatura', 'pbtv' ), value: 'thumbnail' },
+							],
+							onChange: function ( value ) {
+								setAttributes( { format: value } );
 							},
 						} )
 					)
