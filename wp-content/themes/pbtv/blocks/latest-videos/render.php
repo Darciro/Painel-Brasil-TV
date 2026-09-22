@@ -50,9 +50,7 @@ $pbtv_render_latest_video_media = function ( array $video, string $format ): voi
 		?>
 		<a
 			class="video-thumbnail relative block w-full h-full"
-			href="<?php echo esc_url( pbtv_get_youtube_watch_url( $video['id'] ) ); ?>"
-			target="_blank"
-			rel="noopener noreferrer"
+			href="<?php echo esc_url( home_url( '/videos/' . $video['id'] . '/' ) ); ?>"
 			aria-label="<?php echo esc_attr( $video['title'] ); ?>"
 		>
 			<img

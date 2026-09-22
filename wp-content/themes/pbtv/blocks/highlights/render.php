@@ -47,9 +47,7 @@ $pbtv_render_highlight_media = function ( array $highlight, string $format ): vo
 		?>
 		<a
 			class="video-thumbnail relative block w-full h-full"
-			href="<?php echo esc_url( pbtv_get_youtube_watch_url( $highlight['id'] ) ); ?>"
-			target="_blank"
-			rel="noopener noreferrer"
+			href="<?php echo esc_url( home_url( '/videos/' . $highlight['id'] . '/' ) ); ?>"
 			aria-label="<?php echo esc_attr( $title ); ?>"
 		>
 			<img
