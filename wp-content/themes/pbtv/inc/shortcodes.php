@@ -63,7 +63,7 @@ add_action( 'init', 'pbtv_register_videos_shortcode_view_script' );
 function pbtv_videos_shortcode( $atts ): string {
 	$atts = shortcode_atts(
 		array(
-			'channel_id' => 'UC-NaUVi7uxYTceNy6RIWTRw',
+			'channel_id' => pbtv_youtube_channel_id(),
 			'count'      => 15,
 			'columns'    => 3,
 			'per_page'   => 15,

@@ -25,13 +25,30 @@ function pbtv_youtube_api_key(): string {
 }
 
 /**
+ * Gets the YouTube channel ID synced by the daily video cron and used as
+ * the default channel across blocks/shortcodes that don't specify one.
+ *
+ * @return string
+ */
+function pbtv_youtube_channel_id(): string {
+	$channel_id = defined( 'PBTV_YOUTUBE_CHANNEL_ID' ) ? PBTV_YOUTUBE_CHANNEL_ID : 'UC-NaUVi7uxYTceNy6RIWTRw';
+
+	/**
+	 * Filters the default YouTube channel ID.
+	 *
+	 * @param string $channel_id The channel ID.
+	 */
+	return (string) apply_filters( 'pbtv_youtube_channel_id', $channel_id );
+}
+
+/**
  * Retrieves the latest videos from a YouTube channel's live area.
  *
- * Looks first for a broadcast currently live, then fills any remaining
- * slots with the channel's most recent completed live broadcasts, and
- * finally with the channel's most recent uploads if it has no live
- * broadcasts at all. Results are cached in a transient so the YouTube
- * Data API is not queried on every pageview.
+ * Reads from the local "videos" custom post type, which the
+ * `pbtv_sync_youtube_videos` daily cron event keeps in sync with the
+ * YouTube Data API (see inc/post-types.php). Serving requests from this
+ * local copy instead of calling the API on every pageview is what keeps
+ * the site within the API's daily quota.
  *
  * @param string $channel_id  YouTube channel ID.
  * @param int    $max_results Maximum number of videos to return.
@@ -45,29 +62,17 @@ function pbtv_get_youtube_live_videos( string $channel_id, int $max_results = 3 
 		return array();
 	}
 
-	// The YouTube Data API caps a single search.list request at 50 results.
-	$max_results = min( 50, max( 1, $max_results ) );
-
-	$cache_key = 'pbtv_yt_live_' . md5( $channel_id . '|' . $max_results );
-	$cached    = get_transient( $cache_key );
-
-	if ( false !== $cached ) {
-		return $cached;
-	}
-
-	$videos = pbtv_fetch_youtube_live_videos( $channel_id, $max_results );
-
-	// Cache failures/empty results briefly so a down API isn't hit on every pageview.
-	$ttl = $videos ? 5 * MINUTE_IN_SECONDS : MINUTE_IN_SECONDS;
-
-	set_transient( $cache_key, $videos, $ttl );
-
-	return $videos;
+	return pbtv_get_synced_videos( $channel_id, max( 1, $max_results ) );
 }
 
 /**
  * Queries the YouTube Data API for a channel's live broadcasts, falling
  * back to its most recent uploads when it has none.
+ *
+ * Called only by the `pbtv_sync_youtube_videos` daily cron event (see
+ * inc/post-types.php); every other reader goes through the local
+ * "videos" post type via pbtv_get_youtube_live_videos() instead, so this
+ * is the only place the API's daily search quota gets spent.
  *
  * @param string $channel_id  YouTube channel ID.
  * @param int    $max_results Maximum number of videos to return.
@@ -160,6 +165,7 @@ function pbtv_query_youtube_search( string $channel_id, string $api_key, string 
 			'title'     => sanitize_text_field( $item['snippet']['title'] ?? '' ),
 			'thumbnail' => esc_url_raw( $thumbnail ),
 			'status'    => $event_type ? $event_type : 'upload',
+			'published' => sanitize_text_field( $item['snippet']['publishedAt'] ?? '' ),
 		);
 	}
 
