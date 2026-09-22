@@ -39,6 +39,7 @@ archive.glob('**/*', {
         'node_modules/**',
         'package-lock.json',
         'scripts/**',
+        'hot',
     ],
     // Vite writes its production manifest into assets/dist/.vite/manifest.json,
     // which inc/assets.php reads at runtime — must be included in the zip.
