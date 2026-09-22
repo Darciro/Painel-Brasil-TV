@@ -29,6 +29,7 @@ if (! $items) {
 }
 
 $display_items = array_map('pbtv_news_prepare_item_for_display', $items);
+$topic_select_id = wp_unique_id('pbtv-news-topic-');
 
 $news_context = array(
 	'activeTopic' => '',
@@ -65,7 +66,7 @@ wp_interactivity_state(
 				<h3 class="text-pbtv-green uppercase font-bold"><?php echo esc_html($heading); ?></h3>
 			</div>
 
-			<nav class="topics flex justify-between gap-1 mb-4" aria-label="<?php echo esc_attr__('Filter news by topic', 'pbtv'); ?>">
+			<nav class="topics hidden md:flex justify-between gap-1 mb-4" aria-label="<?php echo esc_attr__('Filter news by topic', 'pbtv'); ?>">
 				<h4 class="text-sm font-semibold">
 					<button
 						type="button"
@@ -101,6 +102,28 @@ wp_interactivity_state(
 					</h4>
 				<?php endforeach; ?>
 			</nav>
+
+			<div class="topics-mobile md:hidden mb-4 w-full max-w-40">
+				<label class="sr-only" for="<?php echo esc_attr($topic_select_id); ?>"><?php echo esc_html__('Filter news by topic', 'pbtv'); ?></label>
+				<div class="relative">
+					<select
+						id="<?php echo esc_attr($topic_select_id); ?>"
+						class="w-full appearance-none rounded px-3 py-2 pr-8 text-sm font-semibold bg-pbtv-green text-white transition-all duration-250"
+						data-wp-on--change="actions.setTopicFromSelect"
+						data-wp-bind--value="context.activeTopic"
+						data-wp-class--opacity-50="context.isLoading"
+						data-wp-bind--disabled="context.isLoading"
+					>
+						<option value=""><?php esc_html_e('Destaques', 'pbtv'); ?></option>
+						<?php foreach ($topics as $topic => $subtopics) : ?>
+							<option value="<?php echo esc_attr($topic); ?>"><?php echo esc_html($topic); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-white" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+						<path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+					</svg>
+				</div>
+			</div>
 		</div>
 
 		<p class="text-sm text-pbtv-red mb-4" data-wp-bind--hidden="!context.hasError" aria-live="polite"><?php echo esc_html($news_context['errorLabel']); ?></p>
