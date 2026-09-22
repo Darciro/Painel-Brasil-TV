@@ -26,6 +26,11 @@
 		"showTitle": {
 			"type": "boolean",
 			"default": true
+		},
+		"format": {
+			"type": "string",
+			"enum": [ "embed", "thumbnail" ],
+			"default": "thumbnail"
 		}
 	},
 	"supports": {
@@ -34,5 +39,6 @@
 		"anchor": true
 	},
 	"editorScript": "pbtv-highlights-editor",
+	"style": "pbtv-highlights",
 	"render": "file:./render.php"
 }

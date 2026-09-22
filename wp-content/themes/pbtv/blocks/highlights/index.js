@@ -6,6 +6,7 @@
 	var TextControl = components.TextControl;
 	var TextareaControl = components.TextareaControl;
 	var ToggleControl = components.ToggleControl;
+	var SelectControl = components.SelectControl;
 	var el = element.createElement;
 	var Fragment = element.Fragment;
 	var __ = i18n.__;
@@ -38,6 +39,17 @@
 							checked: attributes.showTitle,
 							onChange: function ( value ) {
 								setAttributes( { showTitle: value } );
+							},
+						} ),
+						el( SelectControl, {
+							label: __( 'Formato', 'pbtv' ),
+							value: attributes.format,
+							options: [
+								{ label: __( 'Miniatura', 'pbtv' ), value: 'thumbnail' },
+								{ label: __( 'Embed', 'pbtv' ), value: 'embed' },
+							],
+							onChange: function ( value ) {
+								setAttributes( { format: value } );
 							},
 						} ),
 						el( TextareaControl, {

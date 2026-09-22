@@ -12,6 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 $heading    = isset( $attributes['heading'] ) ? sanitize_text_field( $attributes['heading'] ) : '';
 $videos     = is_array( $attributes['videos'] ?? null ) ? $attributes['videos'] : array();
 $show_title = isset( $attributes['showTitle'] ) ? (bool) $attributes['showTitle'] : true;
+$format     = isset( $attributes['format'] ) && 'embed' === $attributes['format'] ? 'embed' : 'thumbnail';
 
 $highlights = array();
 
@@ -25,11 +26,54 @@ foreach ( $videos as $video ) {
 	$oembed = pbtv_get_youtube_video_oembed( $video_id );
 
 	$highlights[] = array(
-		'id'    => $video_id,
-		'title' => $oembed['title'] ?? '',
+		'id'        => $video_id,
+		'title'     => $oembed['title'] ?? '',
+		'thumbnail' => $oembed['thumbnail'] ?? '',
 	);
 }
 
+/**
+ * Renders a highlight video as an iframe embed or a linked thumbnail,
+ * depending on the block's "format" attribute.
+ *
+ * @param array<string, string> $highlight Highlight data with id, title
+ *                                          and thumbnail keys.
+ * @param string                $format    Either 'embed' or 'thumbnail'.
+ */
+$pbtv_render_highlight_media = function ( array $highlight, string $format ): void {
+	$title = $highlight['title'] ? $highlight['title'] : __( 'YouTube video', 'pbtv' );
+
+	if ( 'thumbnail' === $format && $highlight['thumbnail'] ) {
+		?>
+		<a
+			class="video-thumbnail relative block w-full h-full"
+			href="<?php echo esc_url( pbtv_get_youtube_watch_url( $highlight['id'] ) ); ?>"
+			target="_blank"
+			rel="noopener noreferrer"
+			aria-label="<?php echo esc_attr( $title ); ?>"
+		>
+			<img
+				class="w-full h-full object-cover"
+				src="<?php echo esc_url( $highlight['thumbnail'] ); ?>"
+				alt="<?php echo esc_attr( $title ); ?>"
+				loading="lazy"
+			/>
+			<span class="video-thumbnail__play" aria-hidden="true"></span>
+		</a>
+		<?php
+		return;
+	}
+	?>
+	<iframe
+		class="w-full h-full"
+		src="<?php echo esc_url( pbtv_get_youtube_embed_url( $highlight['id'] ) ); ?>"
+		title="<?php echo esc_attr( $title ); ?>"
+		loading="lazy"
+		allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+		allowfullscreen
+	></iframe>
+	<?php
+};
 ?>
 <div <?php echo wp_kses_post( get_block_wrapper_attributes() ); ?>>
 	<div class="container py-10 mx-auto px-4 xl:px-0">
@@ -42,14 +86,7 @@ foreach ( $videos as $video ) {
 				<?php foreach ( $highlights as $highlight ) : ?>
 					<div class="highlight-video">
 						<div class="aspect-video">
-							<iframe
-								class="w-full h-full"
-								src="<?php echo esc_url( pbtv_get_youtube_embed_url( $highlight['id'] ) ); ?>"
-								title="<?php echo esc_attr( $highlight['title'] ? $highlight['title'] : __( 'YouTube video', 'pbtv' ) ); ?>"
-								loading="lazy"
-								allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-								allowfullscreen
-							></iframe>
+							<?php $pbtv_render_highlight_media( $highlight, $format ); ?>
 						</div>
 						<?php if ( $show_title && $highlight['title'] ) : ?>
 							<p class="mt-2 text-sm font-semibold text-gray-900"><?php echo esc_html( $highlight['title'] ); ?></p>

@@ -30,7 +30,13 @@ Appearance → Themes.
 - `PBTV_YOUTUBE_API_KEY` is injected into `wp-config.php` at container start
   via `WORDPRESS_CONFIG_EXTRA` (see [wp-content/themes/pbtv/inc/youtube.php](wp-content/themes/pbtv/inc/youtube.php)
   for how it's consumed) — it is never baked into the image.
-- The `wordpress` container is stateless: `wp-content/themes/pbtv` and the
-  plugins are reset to what's in this repo on every rebuild. Only the
-  database and `wp-content/uploads` persist across `docker compose down`.
-- To pick up theme/plugin changes, rebuild: `docker compose up -d --build`.
+- `wp-content/themes/pbtv` is bind-mounted from the repo into the container,
+  so PHP edits show up on a browser refresh — no rebuild needed. The bundled
+  plugins are still baked into the image and reset to what's in this repo on
+  every rebuild; only the database and `wp-content/uploads` persist across
+  `docker compose down`.
+- Theme CSS/JS is still built at image build time (`npm run build`), so after
+  editing `src/` assets you need either `docker compose up -d --build` or a
+  local Vite dev server (`npm run dev` in `wp-content/themes/pbtv`) targeting
+  the container.
+- To pick up plugin changes, rebuild: `docker compose up -d --build`.

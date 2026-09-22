@@ -66,7 +66,7 @@ function pbtv_videos_shortcode( $atts ): string {
 		<div class="<?php echo esc_attr( pbtv_videos_shortcode_grid_class( $columns ) ); ?>">
 			<?php foreach ( $videos as $video ) : ?>
 				<a
-					class="block rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition"
+					class="block hover:-translate-y-0.5 transition"
 					href="<?php echo esc_url( pbtv_get_youtube_watch_url( $video['id'] ) ); ?>"
 					target="_blank"
 					rel="noopener noreferrer"
@@ -81,8 +81,8 @@ function pbtv_videos_shortcode( $atts ): string {
 							/>
 						<?php endif; ?>
 					</div>
-					<div class="p-3">
-						<p class="text-sm font-semibold text-gray-900 leading-snug line-clamp-3"><?php echo esc_html( $video['title'] ); ?></p>
+					<div class="py-3">
+						<p class="text-sm font-bold text-pbtv-red leading-snug line-clamp-3"><?php echo esc_html( $video['title'] ); ?></p>
 					</div>
 				</a>
 			<?php endforeach; ?>
