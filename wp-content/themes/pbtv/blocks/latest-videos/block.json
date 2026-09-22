@@ -28,9 +28,11 @@
 	},
 	"supports": {
 		"html": false,
-		"align": false
+		"align": false,
+		"interactivity": true
 	},
 	"editorScript": "pbtv-latest-videos-editor",
+	"viewScriptModule": "file:./view.js",
 	"style": "pbtv-latest-videos",
 	"render": "file:./render.php"
 }

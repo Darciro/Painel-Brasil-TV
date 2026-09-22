@@ -45,6 +45,9 @@ function pbtv_get_youtube_live_videos( string $channel_id, int $max_results = 3 
 		return array();
 	}
 
+	// The YouTube Data API caps a single search.list request at 50 results.
+	$max_results = min( 50, max( 1, $max_results ) );
+
 	$cache_key = 'pbtv_yt_live_' . md5( $channel_id . '|' . $max_results );
 	$cached    = get_transient( $cache_key );
 
@@ -54,7 +57,10 @@ function pbtv_get_youtube_live_videos( string $channel_id, int $max_results = 3 
 
 	$videos = pbtv_fetch_youtube_live_videos( $channel_id, $max_results );
 
-	set_transient( $cache_key, $videos, 5 * MINUTE_IN_SECONDS );
+	// Cache failures/empty results briefly so a down API isn't hit on every pageview.
+	$ttl = $videos ? 5 * MINUTE_IN_SECONDS : MINUTE_IN_SECONDS;
+
+	set_transient( $cache_key, $videos, $ttl );
 
 	return $videos;
 }
@@ -239,7 +245,10 @@ function pbtv_get_youtube_video_oembed( string $video_id ): array {
 
 	$data = pbtv_fetch_youtube_video_oembed( $video_id );
 
-	set_transient( $cache_key, $data, DAY_IN_SECONDS );
+	// Cache a resolved video for a day, but retry sooner if oEmbed failed.
+	$ttl = $data ? DAY_IN_SECONDS : 5 * MINUTE_IN_SECONDS;
+
+	set_transient( $cache_key, $data, $ttl );
 
 	return $data;
 }
@@ -275,5 +284,83 @@ function pbtv_fetch_youtube_video_oembed( string $video_id ): array {
 	return array(
 		'title'     => sanitize_text_field( $body['title'] ?? '' ),
 		'thumbnail' => esc_url_raw( $body['thumbnail_url'] ?? '' ),
+	);
+}
+
+/**
+ * Formats a raw live video for display, adding the single-video page URL
+ * and embed URL the pbtv/latest-videos block's view script needs to build
+ * its markup.
+ *
+ * @param array<string, string> $video Raw video, see pbtv_query_youtube_search().
+ *
+ * @return array<string, string> Video ready for display.
+ */
+function pbtv_latest_video_prepare_item_for_display( array $video ): array {
+	return array(
+		'id'        => (string) $video['id'],
+		'title'     => (string) $video['title'],
+		'thumbnail' => (string) $video['thumbnail'],
+		'url'       => home_url( '/videos/' . $video['id'] . '/' ),
+		'embedUrl'  => pbtv_get_youtube_embed_url( $video['id'] ),
+	);
+}
+
+/**
+ * Registers the REST route the pbtv/latest-videos block's view script uses
+ * to fetch a channel's latest live videos client-side, keeping the YouTube
+ * Data API calls off the page's initial render so the block's loading
+ * skeleton is what visitors actually see while they load.
+ *
+ * @return void
+ */
+function pbtv_register_latest_videos_rest_route(): void {
+	register_rest_route(
+		'pbtv/v1',
+		'/latest-videos',
+		array(
+			'methods'             => WP_REST_Server::READABLE,
+			'callback'            => 'pbtv_rest_get_latest_videos',
+			'permission_callback' => '__return_true',
+			'args'                => array(
+				'channelId'  => array(
+					'type'              => 'string',
+					'required'          => true,
+					'sanitize_callback' => 'sanitize_text_field',
+				),
+				'maxResults' => array(
+					'type'              => 'integer',
+					'default'           => 3,
+					'sanitize_callback' => 'absint',
+				),
+			),
+		)
+	);
+}
+
+add_action( 'rest_api_init', 'pbtv_register_latest_videos_rest_route' );
+
+/**
+ * REST callback returning a channel's latest live videos for the
+ * pbtv/latest-videos block's client-side fetch.
+ *
+ * @param WP_REST_Request $request REST request.
+ *
+ * @return WP_REST_Response
+ */
+function pbtv_rest_get_latest_videos( WP_REST_Request $request ): WP_REST_Response {
+	$channel_id  = (string) $request->get_param( 'channelId' );
+	$max_results = max( 1, min( 50, absint( $request->get_param( 'maxResults' ) ) ) );
+
+	if ( ! $channel_id ) {
+		return new WP_REST_Response( array( 'videos' => array() ) );
+	}
+
+	$videos = pbtv_get_youtube_live_videos( $channel_id, $max_results );
+
+	return new WP_REST_Response(
+		array(
+			'videos' => array_map( 'pbtv_latest_video_prepare_item_for_display', $videos ),
+		)
 	);
 }

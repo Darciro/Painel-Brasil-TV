@@ -68,11 +68,11 @@ if ( $video_post ) {
 
 </head>
 
-<body <?php body_class( 'pbtv-video-page' ); ?>>
+<body <?php body_class( 'videos-template pbtv-video-page' ); ?>>
 
 <?php wp_body_open(); ?>
 
-<?php echo do_blocks( '<!-- wp:template-part {"slug":"header","tagName":"header"} /-->' ); ?>
+<?php echo do_blocks( '<!-- wp:template-part {"slug":"header","className":"sticky top-0 z-[1000] bg-white"} /-->' ); ?>
 
 <main class="wp-block-group" aria-labelledby="pbtv-video-title">
 

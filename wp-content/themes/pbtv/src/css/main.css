@@ -25,6 +25,15 @@
 	margin-bottom: 2rem;
 }
 
+.videos-template .site-header {
+	width: 100%;
+	display: block;
+}
+
+.videos-template .site-header > div {
+	margin: auto;
+}
+
 @media (max-width: 40rem) {
 	header .wp-block-site-logo img{
 		height: 100%;
