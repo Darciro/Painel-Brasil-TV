@@ -25,7 +25,7 @@ function pbtv_youtube_api_key(): string {
 }
 
 /**
- * Gets the YouTube channel ID synced by the daily video cron and used as
+ * Gets the YouTube channel ID synced by the video sync cron and used as
  * the default channel across blocks/shortcodes that don't specify one.
  *
  * @return string
@@ -45,7 +45,7 @@ function pbtv_youtube_channel_id(): string {
  * Retrieves the latest videos from a YouTube channel's live area.
  *
  * Reads from the local "videos" custom post type, which the
- * `pbtv_sync_youtube_videos` daily cron event keeps in sync with the
+ * `pbtv_sync_youtube_videos` cron event keeps in sync with the
  * YouTube Data API (see inc/post-types.php). Serving requests from this
  * local copy instead of calling the API on every pageview is what keeps
  * the site within the API's daily quota.
@@ -66,110 +66,274 @@ function pbtv_get_youtube_live_videos( string $channel_id, int $max_results = 3 
 }
 
 /**
- * Queries the YouTube Data API for a channel's live broadcasts, falling
- * back to its most recent uploads when it has none.
+ * Gets the number of YouTube Data API quota units the video sync may
+ * spend per quota day.
  *
- * Called only by the `pbtv_sync_youtube_videos` daily cron event (see
- * inc/post-types.php); every other reader goes through the local
- * "videos" post type via pbtv_get_youtube_live_videos() instead, so this
- * is the only place the API's daily search quota gets spent.
+ * Defaults to 9,000 of the API's standard 10,000 daily units, leaving
+ * headroom for the on-demand calls made outside the sync (see
+ * pbtv_fetch_youtube_video_published_at()) and for anything else sharing
+ * the same API key.
  *
- * @param string $channel_id  YouTube channel ID.
- * @param int    $max_results Maximum number of videos to return.
- *
- * @return array<int, array<string, string>>
+ * @return int
  */
-function pbtv_fetch_youtube_live_videos( string $channel_id, int $max_results ): array {
-	$api_key = pbtv_youtube_api_key();
-
-	if ( ! $api_key ) {
-		return array();
-	}
-
-	$videos = pbtv_query_youtube_search( $channel_id, $api_key, 'live', $max_results );
-
-	foreach ( array( 'completed', '' ) as $event_type ) {
-		$remaining = $max_results - count( $videos );
-
-		if ( $remaining <= 0 ) {
-			break;
-		}
-
-		$found  = pbtv_query_youtube_search( $channel_id, $api_key, $event_type, $remaining );
-		$videos = array_merge( $videos, $found );
-	}
-
-	return array_slice( $videos, 0, $max_results );
+function pbtv_youtube_daily_quota_budget(): int {
+	/**
+	 * Filters the daily YouTube Data API quota budget of the video sync.
+	 *
+	 * @param int $budget Quota units per day.
+	 */
+	return max( 0, (int) apply_filters( 'pbtv_youtube_daily_quota_budget', 9000 ) );
 }
 
 /**
- * Runs a single YouTube Data API `search.list` request scoped to a
- * channel, optionally filtered to a live event type.
+ * Gets the current YouTube Data API quota day. Google resets the daily
+ * quota at midnight Pacific Time, so usage is bucketed by that date
+ * rather than the site's own timezone.
  *
- * @param string $channel_id  YouTube channel ID.
- * @param string $api_key     Google API key.
- * @param string $event_type  'live', 'completed', or '' for any video
- *                             (the channel's most recent uploads).
- * @param int    $max_results Maximum number of results to request.
- *
- * @return array<int, array<string, string>>
+ * @return string Date in Y-m-d format.
  */
-function pbtv_query_youtube_search( string $channel_id, string $api_key, string $event_type, int $max_results ): array {
-	if ( $max_results < 1 ) {
+function pbtv_youtube_quota_day(): string {
+	return ( new DateTimeImmutable( 'now', new DateTimeZone( 'America/Los_Angeles' ) ) )->format( 'Y-m-d' );
+}
+
+/**
+ * Gets the quota units this site has spent on the current quota day.
+ *
+ * This is the site's own tally of the requests it made, not a figure
+ * reported by Google, so it can't account for other consumers of the
+ * same API key.
+ *
+ * @return int
+ */
+function pbtv_youtube_quota_used(): int {
+	$usage = get_option( 'pbtv_youtube_quota_usage', array() );
+
+	if ( ! is_array( $usage ) || ( $usage['day'] ?? '' ) !== pbtv_youtube_quota_day() ) {
+		return 0;
+	}
+
+	return (int) ( $usage['units'] ?? 0 );
+}
+
+/**
+ * Adds to the quota units spent on the current quota day.
+ *
+ * @param int $units Units spent.
+ *
+ * @return void
+ */
+function pbtv_youtube_record_quota_usage( int $units ): void {
+	update_option(
+		'pbtv_youtube_quota_usage',
+		array(
+			'day'   => pbtv_youtube_quota_day(),
+			'units' => pbtv_youtube_quota_used() + $units,
+		),
+		false
+	);
+}
+
+/**
+ * Gets the quota units the video sync may still spend today.
+ *
+ * @return int
+ */
+function pbtv_youtube_quota_remaining(): int {
+	return max( 0, pbtv_youtube_daily_quota_budget() - pbtv_youtube_quota_used() );
+}
+
+/**
+ * Runs a single YouTube Data API GET request and records its quota cost.
+ *
+ * When Google reports the quota as exhausted, the local tally is pushed
+ * up to the budget so the sync stops trying until the next quota day.
+ *
+ * @param string               $endpoint Endpoint name, e.g. 'videos'.
+ * @param array<string, mixed> $args     Query arguments, without the key.
+ * @param int                  $cost     Quota units the request costs.
+ *
+ * @return array<string, mixed>|WP_Error Decoded response body, or a
+ *                                       WP_Error whose code is the API's
+ *                                       error reason when it gave one.
+ */
+function pbtv_youtube_api_get( string $endpoint, array $args, int $cost = 1 ): array|WP_Error {
+	$api_key = pbtv_youtube_api_key();
+
+	if ( ! $api_key ) {
+		return new WP_Error( 'pbtv_youtube_missing_api_key', 'The YouTube Data API key is not configured.' );
+	}
+
+	$url = add_query_arg(
+		array_merge( $args, array( 'key' => $api_key ) ),
+		'https://www.googleapis.com/youtube/v3/' . $endpoint
+	);
+
+	$response = wp_remote_get( $url, array( 'timeout' => 10 ) );
+
+	if ( is_wp_error( $response ) ) {
+		return $response;
+	}
+
+	// Google bills a request whether or not it succeeds.
+	pbtv_youtube_record_quota_usage( $cost );
+
+	$body = json_decode( wp_remote_retrieve_body( $response ), true );
+	$body = is_array( $body ) ? $body : array();
+	$code = (int) wp_remote_retrieve_response_code( $response );
+
+	if ( 200 !== $code ) {
+		$reason = (string) ( $body['error']['errors'][0]['reason'] ?? 'pbtv_youtube_http_' . $code );
+
+		if ( in_array( $reason, array( 'quotaExceeded', 'dailyLimitExceeded' ), true ) ) {
+			pbtv_youtube_record_quota_usage( pbtv_youtube_quota_remaining() );
+		}
+
+		return new WP_Error( $reason, (string) ( $body['error']['message'] ?? 'YouTube Data API request failed.' ) );
+	}
+
+	return $body;
+}
+
+/**
+ * Gets the ID of a channel's "uploads" playlist, which lists every public
+ * video on the channel (live broadcasts included), newest first.
+ *
+ * YouTube derives it from the channel ID by swapping the "UC" prefix for
+ * "UU", which saves a `channels.list` request per sync.
+ *
+ * @param string $channel_id YouTube channel ID.
+ *
+ * @return string The playlist ID, or an empty string for an unexpected
+ *                channel ID format.
+ */
+function pbtv_youtube_uploads_playlist_id( string $channel_id ): string {
+	return str_starts_with( $channel_id, 'UC' ) ? 'UU' . substr( $channel_id, 2 ) : '';
+}
+
+/**
+ * Fetches one page (up to 50 videos) of a channel's uploads playlist via
+ * `playlistItems.list`, at 1 quota unit per page.
+ *
+ * Used instead of `search.list`, which costs 100 units per page and stops
+ * paginating after roughly 500 results, so it can neither backfill a
+ * large channel nor do so within the daily quota.
+ *
+ * @param string $playlist_id Uploads playlist ID.
+ * @param string $page_token  Page token, or '' for the first (newest) page.
+ *
+ * @return array{ids: string[], next: string}|WP_Error The page's video IDs
+ *                                                   and the next page's
+ *                                                   token ('' on the last).
+ */
+function pbtv_fetch_youtube_uploads_page( string $playlist_id, string $page_token = '' ): array|WP_Error {
+	$args = array(
+		'part'       => 'contentDetails',
+		'playlistId' => $playlist_id,
+		'maxResults' => 50,
+		'fields'     => 'nextPageToken,items/contentDetails/videoId',
+	);
+
+	if ( $page_token ) {
+		$args['pageToken'] = $page_token;
+	}
+
+	$body = pbtv_youtube_api_get( 'playlistItems', $args );
+
+	if ( is_wp_error( $body ) ) {
+		return $body;
+	}
+
+	$ids = array();
+
+	foreach ( (array) ( $body['items'] ?? array() ) as $item ) {
+		$video_id = pbtv_extract_youtube_video_id( (string) ( $item['contentDetails']['videoId'] ?? '' ) );
+
+		if ( $video_id ) {
+			$ids[] = $video_id;
+		}
+	}
+
+	return array(
+		'ids'  => $ids,
+		'next' => sanitize_text_field( (string) ( $body['nextPageToken'] ?? '' ) ),
+	);
+}
+
+/**
+ * Fetches the details of up to 50 videos via `videos.list`, at 1 quota
+ * unit per request regardless of how many IDs it asks for.
+ *
+ * Private and deleted videos, which the uploads playlist can still list,
+ * are simply absent from the response.
+ *
+ * @param string[] $video_ids YouTube video IDs, at most 50.
+ *
+ * @return array<int, array<string, string>>|WP_Error List of videos, each
+ *                                                    with id, title,
+ *                                                    thumbnail, status and
+ *                                                    published keys.
+ */
+function pbtv_fetch_youtube_videos( array $video_ids ): array|WP_Error {
+	if ( ! $video_ids ) {
 		return array();
 	}
 
-	$args = array(
-		'part'       => 'snippet',
-		'channelId'  => $channel_id,
-		'type'       => 'video',
-		'order'      => 'date',
-		'maxResults' => $max_results,
-		'key'        => $api_key,
-	);
-
-	if ( $event_type ) {
-		$args['eventType'] = $event_type;
-	}
-
-	$url = add_query_arg( $args, 'https://www.googleapis.com/youtube/v3/search' );
-
-	$response = wp_remote_get(
-		$url,
+	$body = pbtv_youtube_api_get(
+		'videos',
 		array(
-			'timeout' => 5,
+			'part'       => 'snippet,liveStreamingDetails',
+			'id'         => implode( ',', array_slice( $video_ids, 0, 50 ) ),
+			'maxResults' => 50,
 		)
 	);
 
-	if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
-		return array();
+	if ( is_wp_error( $body ) ) {
+		return $body;
 	}
-
-	$body  = json_decode( wp_remote_retrieve_body( $response ), true );
-	$items = is_array( $body['items'] ?? null ) ? $body['items'] : array();
 
 	$videos = array();
 
-	foreach ( $items as $item ) {
-		$video_id = $item['id']['videoId'] ?? '';
+	foreach ( (array) ( $body['items'] ?? array() ) as $item ) {
+		$video_id = pbtv_extract_youtube_video_id( (string) ( $item['id'] ?? '' ) );
 
 		if ( ! $video_id ) {
 			continue;
 		}
 
-		$thumbnails = $item['snippet']['thumbnails'] ?? array();
+		$snippet    = (array) ( $item['snippet'] ?? array() );
+		$thumbnails = (array) ( $snippet['thumbnails'] ?? array() );
 		$thumbnail  = $thumbnails['high']['url'] ?? ( $thumbnails['default']['url'] ?? '' );
 
 		$videos[] = array(
-			'id'        => sanitize_text_field( $video_id ),
-			'title'     => sanitize_text_field( $item['snippet']['title'] ?? '' ),
-			'thumbnail' => esc_url_raw( $thumbnail ),
-			'status'    => $event_type ? $event_type : 'upload',
-			'published' => sanitize_text_field( $item['snippet']['publishedAt'] ?? '' ),
+			'id'        => $video_id,
+			'title'     => sanitize_text_field( (string) ( $snippet['title'] ?? '' ) ),
+			'thumbnail' => esc_url_raw( (string) $thumbnail ),
+			'status'    => pbtv_youtube_video_status( $item ),
+			'published' => sanitize_text_field( (string) ( $snippet['publishedAt'] ?? '' ) ),
 		);
 	}
 
 	return $videos;
+}
+
+/**
+ * Classifies a `videos.list` item into the statuses the local "videos"
+ * posts use: 'live' (broadcasting now), 'upcoming' (scheduled broadcast
+ * or premiere, not shown on the site), 'completed' (ended live
+ * broadcast) or 'upload' (regular video).
+ *
+ * @param array<string, mixed> $item Raw `videos.list` item.
+ *
+ * @return string
+ */
+function pbtv_youtube_video_status( array $item ): string {
+	$broadcast = (string) ( $item['snippet']['liveBroadcastContent'] ?? 'none' );
+
+	if ( in_array( $broadcast, array( 'live', 'upcoming' ), true ) ) {
+		return $broadcast;
+	}
+
+	return empty( $item['liveStreamingDetails']['actualEndTime'] ) ? 'upload' : 'completed';
 }
 
 /**
@@ -294,11 +458,44 @@ function pbtv_fetch_youtube_video_oembed( string $video_id ): array {
 }
 
 /**
+ * Queries the YouTube Data API `videos.list` endpoint for a single
+ * video's publish date, which the oEmbed endpoint doesn't expose.
+ *
+ * Costs one unit of the API's daily quota, so it's only called once per
+ * video, when the /videos/{id}/ route first imports it (see
+ * pbtv_get_or_create_video_post()).
+ *
+ * @param string $video_id YouTube video ID.
+ *
+ * @return string The ISO 8601 publish date, or an empty string when it
+ *                could not be retrieved.
+ */
+function pbtv_fetch_youtube_video_published_at( string $video_id ): string {
+	if ( ! $video_id ) {
+		return '';
+	}
+
+	$body = pbtv_youtube_api_get(
+		'videos',
+		array(
+			'part' => 'snippet',
+			'id'   => $video_id,
+		)
+	);
+
+	if ( is_wp_error( $body ) ) {
+		return '';
+	}
+
+	return sanitize_text_field( (string) ( $body['items'][0]['snippet']['publishedAt'] ?? '' ) );
+}
+
+/**
  * Formats a raw live video for display, adding the single-video page URL
  * and embed URL the pbtv/latest-videos block's view script needs to build
  * its markup.
  *
- * @param array<string, string> $video Raw video, see pbtv_query_youtube_search().
+ * @param array<string, string> $video Raw video, see pbtv_fetch_youtube_videos().
  *
  * @return array<string, string> Video ready for display.
  */
@@ -309,6 +506,50 @@ function pbtv_latest_video_prepare_item_for_display( array $video ): array {
 		'thumbnail' => (string) $video['thumbnail'],
 		'url'       => home_url( '/videos/' . $video['id'] . '/' ),
 		'embedUrl'  => pbtv_get_youtube_embed_url( $video['id'] ),
+	) + pbtv_get_video_date_fields( (string) ( $video['published'] ?? '' ) );
+}
+
+/**
+ * Formats a video's publish date for display: the human-readable date in
+ * the site's configured date format and timezone, plus the ISO 8601 value
+ * for a <time> element's datetime attribute.
+ *
+ * @param string $published Publish date in any strtotime()-parseable format.
+ *
+ * @return array{date: string, datetime: string} Both empty when the date
+ *                                               is missing or unparseable.
+ */
+function pbtv_get_video_date_fields( string $published ): array {
+	$timestamp = $published ? strtotime( $published ) : false;
+
+	return array(
+		'date'     => $timestamp ? (string) wp_date( get_option( 'date_format' ), $timestamp ) : '',
+		'datetime' => $timestamp ? (string) wp_date( DATE_W3C, $timestamp ) : '',
+	);
+}
+
+/**
+ * Renders a video's publish date line, wrapping the display date in a
+ * <time> element carrying the machine-readable datetime. Server-side
+ * counterpart of buildDate() in the blocks' view scripts.
+ *
+ * @param string $published Publish date in any strtotime()-parseable format.
+ * @param string $class     Classes for the wrapping paragraph.
+ *
+ * @return string The markup, or an empty string when there is no date.
+ */
+function pbtv_render_video_date( string $published, string $class = 'text-[10px] text-pbtv-green font-bold uppercase' ): string {
+	$fields = pbtv_get_video_date_fields( $published );
+
+	if ( ! $fields['date'] ) {
+		return '';
+	}
+
+	return sprintf(
+		'<p class="%1$s"><time datetime="%2$s">%3$s</time></p>',
+		esc_attr( $class ),
+		esc_attr( $fields['datetime'] ),
+		esc_html( $fields['date'] )
 	);
 }
 

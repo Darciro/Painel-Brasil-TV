@@ -25,10 +25,18 @@ foreach ( $videos as $video ) {
 
 	$oembed = pbtv_get_youtube_video_oembed( $video_id );
 
+	/*
+	 * oEmbed carries no publish date, so it's read from the video's
+	 * "videos" post, which is created (with its YouTube publish date)
+	 * the first time the video is needed and reused from then on.
+	 */
+	$video_post = pbtv_get_or_create_video_post( $video_id );
+
 	$highlights[] = array(
 		'id'        => $video_id,
 		'title'     => $oembed['title'] ?? '',
 		'thumbnail' => $oembed['thumbnail'] ?? '',
+		'published' => $video_post ? (string) get_post_time( DATE_W3C, true, $video_post ) : '',
 	);
 }
 
@@ -95,8 +103,9 @@ $pbtv_render_highlight_media = function ( array $highlight, string $format ) use
 						<div class="aspect-video">
 							<?php $pbtv_render_highlight_media( $highlight, $format ); ?>
 						</div>
+						<?php echo wp_kses_post( pbtv_render_video_date( $highlight['published'] ) ); ?>
 						<?php if ( $show_title && $highlight['title'] ) : ?>
-							<p class="mt-2 text-sm font-semibold text-gray-900">
+							<p class="text-sm font-semibold text-gray-900">
 								<a href="<?php echo esc_url( $pbtv_get_highlight_url( $highlight['id'] ) ); ?>"><?php echo esc_html( $highlight['title'] ); ?></a>
 							</p>
 						<?php endif; ?>

@@ -201,6 +201,7 @@ function pbtv_render_video_card( array $video ): string {
 			<?php endif; ?>
 		</div>
 		<div class="py-3">
+			<?php echo wp_kses_post( pbtv_render_video_date( (string) ( $video['published'] ?? '' ), 'text-[10px] text-pbtv-green font-bold uppercase' ) ); ?>
 			<p class="text-sm font-bold text-pbtv-red leading-snug line-clamp-3"><?php echo esc_html( $video['title'] ); ?></p>
 		</div>
 	</a>
@@ -324,5 +325,5 @@ function pbtv_videos_shortcode_prepare_item_for_display( array $video ): array {
 		'title'     => $video['title'],
 		'thumbnail' => $video['thumbnail'],
 		'url'       => home_url( '/videos/' . $video['id'] . '/' ),
-	);
+	) + pbtv_get_video_date_fields( (string) ( $video['published'] ?? '' ) );
 }

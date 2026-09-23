@@ -68,7 +68,34 @@ function buildMedia(video, format) {
 }
 
 /**
- * Builds a single video card: its media plus a linked heading.
+ * Builds a video's publish date line, wrapping the display date in a
+ * <time> element carrying the machine-readable datetime.
+ *
+ * @param {Object} video Prepared video.
+ * @return {HTMLElement|null} The date element, or null when the video has no date.
+ */
+function buildDate(video) {
+	if (!video.date) {
+		return null;
+	}
+
+	const paragraph = document.createElement('p');
+	paragraph.className = 'text-[10px] text-pbtv-green mt-2 font-bold uppercase';
+
+	const time = document.createElement('time');
+	time.textContent = video.date;
+
+	if (video.datetime) {
+		time.dateTime = video.datetime;
+	}
+
+	paragraph.append(time);
+
+	return paragraph;
+}
+
+/**
+ * Builds a single video card: its media, publish date and a linked heading.
  *
  * @param {Object} video        Prepared video.
  * @param {string} format       Either 'embed' or 'thumbnail'.
@@ -92,7 +119,9 @@ function buildCard(video, format, headingClass, wrapperClass) {
 	link.textContent = video.title || '';
 
 	heading.append(link);
-	wrapper.append(media, heading);
+
+	const date = buildDate(video);
+	wrapper.append(...(date ? [media, date, heading] : [media, heading]));
 
 	return wrapper;
 }
@@ -122,7 +151,7 @@ function renderVideos(grid, videos, format) {
 	const [primary, ...secondary] = videos;
 
 	grid.append(
-		buildCard(primary, format, 'mt-2 text-2xl font-bold text-pbtv-red', 'live-video')
+		buildCard(primary, format, 'text-2xl font-bold text-pbtv-red', 'live-video')
 	);
 
 	if (secondary.length) {
@@ -131,7 +160,7 @@ function renderVideos(grid, videos, format) {
 
 		column.append(
 			...secondary.map((video) =>
-				buildCard(video, format, 'mt-2 text-lg font-bold text-pbtv-red', 'latest-video')
+				buildCard(video, format, 'text-lg font-bold text-pbtv-red', 'latest-video')
 			)
 		);
 

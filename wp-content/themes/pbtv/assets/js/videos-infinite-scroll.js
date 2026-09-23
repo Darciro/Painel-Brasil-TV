@@ -26,6 +26,34 @@ function isSafeUrl(url) {
 }
 
 /**
+ * Builds a video's publish date line, wrapping the display date in a
+ * <time> element carrying the machine-readable datetime. Mirrors
+ * pbtv_render_video_date() for the server-rendered cards.
+ *
+ * @param {Object} video Prepared video item.
+ * @return {HTMLElement|null} The date element, or null when the video has no date.
+ */
+function buildDate(video) {
+	if (!video.date) {
+		return null;
+	}
+
+	const paragraph = document.createElement('p');
+	paragraph.className = 'text-[10px] text-pbtv-green mt-2 font-bold uppercase';
+
+	const time = document.createElement('time');
+	time.textContent = video.date;
+
+	if (video.datetime) {
+		time.dateTime = video.datetime;
+	}
+
+	paragraph.append(time);
+
+	return paragraph;
+}
+
+/**
  * Builds a single video card as DOM nodes, using textContent/attribute
  * assignment (never innerHTML) so API-sourced titles can never be
  * interpreted as markup.
@@ -57,7 +85,8 @@ function buildVideoCard(video) {
 	title.className = 'text-sm font-bold text-pbtv-red leading-snug line-clamp-3';
 	title.textContent = video.title || '';
 
-	body.append(title);
+	const date = buildDate(video);
+	body.append(...(date ? [date, title] : [title]));
 	card.append(media, body);
 
 	return card;

@@ -77,6 +77,7 @@ if ( $video_post ) {
 <main class="wp-block-group" aria-labelledby="pbtv-video-title">
 
 	<div class="wp-block-group container mx-auto max-w-4xl px-4 py-10 xl:px-0 min-h-[calc(100vh-230px)]">
+		<?php echo wp_kses_post( pbtv_render_video_date( (string) ( $video_post->post_date ?? '' ), 'text-[10px] text-pbtv-green font-bold uppercase' ) ); ?>
 		<h1 id="pbtv-video-title" class="wp-block-post-title text-pbtv-red font-bold text-3xl md:text-4xl">
 			<?php echo esc_html( $video_title ); ?>
 		</h1>
